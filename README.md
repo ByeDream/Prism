@@ -8,6 +8,10 @@ An API gateway that accepts Anthropic-style API calls, translates them to OpenAI
 - **Endpoint Routing** — Forwards translated requests to configurable upstream OpenAI-compatible endpoints
 - **Streaming Support** — Handles both streaming and non-streaming responses
 
+## Prerequisites
+
+- Python 3.11+
+
 ## Quick Start
 
 ```bash
