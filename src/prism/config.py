@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     # Upstream
     upstream_timeout: float = Field(default=300.0)
 
+    # CORS
+    cors_origins: str = Field(default="")
+
     # Admin API
     prism_admin_key: str = Field(default="")
 

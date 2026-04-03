@@ -38,6 +38,18 @@ async def _lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Prism", version="0.2.0", lifespan=_lifespan)
+
+if settings.cors_origins:
+    from fastapi.middleware.cors import CORSMiddleware
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[o.strip() for o in settings.cors_origins.split(",")],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
 rate_limiter = RateLimiter()
 usage_recorder = UsageRecorder(settings.usage_db)
 

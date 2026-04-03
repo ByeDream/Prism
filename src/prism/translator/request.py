@@ -7,6 +7,7 @@ from typing import Any
 
 from prism.config import settings
 from prism.translator.models import (
+    AnthropicImageBlock,
     AnthropicRequest,
     AnthropicTextBlock,
     AnthropicToolResultBlock,
@@ -58,12 +59,22 @@ def _translate_tool_choice(
     return None
 
 
+def _translate_image_block(block: AnthropicImageBlock) -> dict[str, Any]:
+    """Convert an Anthropic image block to an OpenAI image_url content part."""
+    src = block.source
+    if src.type == "base64":
+        url = f"data:{src.media_type};base64,{src.data}"
+    else:
+        url = src.url or ""
+    return {"type": "image_url", "image_url": {"url": url}}
+
+
 def _translate_messages(
     messages: list[Any],
 ) -> list[OpenAIMessage]:
     """Convert Anthropic message list to OpenAI message list.
 
-    Handles text, tool_use (assistant), and tool_result (user) content blocks.
+    Handles text, image, tool_use (assistant), and tool_result (user) content blocks.
     """
     oai_messages: list[OpenAIMessage] = []
 
@@ -73,12 +84,15 @@ def _translate_messages(
             continue
 
         text_parts: list[str] = []
+        image_parts: list[dict[str, Any]] = []
         tool_calls: list[OpenAIToolCall] = []
         tool_results: list[OpenAIMessage] = []
 
         for block in msg.content:
             if isinstance(block, AnthropicTextBlock):
                 text_parts.append(block.text)
+            elif isinstance(block, AnthropicImageBlock):
+                image_parts.append(_translate_image_block(block))
             elif isinstance(block, AnthropicToolUseBlock):
                 tool_calls.append(
                     OpenAIToolCall(
@@ -111,7 +125,12 @@ def _translate_messages(
                 )
             )
         else:
-            if text_parts:
+            if image_parts:
+                parts: list[dict[str, Any]] = [
+                    {"type": "text", "text": t} for t in text_parts
+                ] + image_parts
+                oai_messages.append(OpenAIMessage(role="user", content=parts))
+            elif text_parts:
                 oai_messages.append(
                     OpenAIMessage(role="user", content="\n".join(text_parts))
                 )

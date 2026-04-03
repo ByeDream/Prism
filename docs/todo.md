@@ -2,6 +2,6 @@
 
 Items identified but not yet scheduled.
 
-- Model name alias mapping table (e.g. `"claude-sonnet"` -> `"qwen-72b"`)
-- Image / vision content block support
-- CORS configuration (for browser-based agent clients)
+- ~~Image / vision content block support~~ (done)
+- ~~CORS configuration (for browser-based agent clients)~~ (done)
+- Model name alias mapping table — deferred; Venus upstream already accepts model names directly

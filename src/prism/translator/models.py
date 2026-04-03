@@ -16,6 +16,18 @@ class AnthropicTextBlock(BaseModel):
     text: str
 
 
+class AnthropicImageSource(BaseModel):
+    type: Literal["base64", "url"]
+    media_type: str | None = None
+    data: str | None = None
+    url: str | None = None
+
+
+class AnthropicImageBlock(BaseModel):
+    type: Literal["image"] = "image"
+    source: AnthropicImageSource
+
+
 class AnthropicToolUseBlock(BaseModel):
     type: Literal["tool_use"] = "tool_use"
     id: str
@@ -30,7 +42,12 @@ class AnthropicToolResultBlock(BaseModel):
     is_error: bool | None = None
 
 
-AnthropicContentBlock = Union[AnthropicTextBlock, AnthropicToolUseBlock, AnthropicToolResultBlock]
+AnthropicContentBlock = Union[
+    AnthropicTextBlock,
+    AnthropicImageBlock,
+    AnthropicToolUseBlock,
+    AnthropicToolResultBlock,
+]
 
 
 class AnthropicMessage(BaseModel):
@@ -127,7 +144,7 @@ class OpenAIToolCall(BaseModel):
 
 class OpenAIMessage(BaseModel):
     role: str
-    content: str | None = None
+    content: str | list[dict[str, Any]] | None = None
     tool_calls: list[OpenAIToolCall] | None = None
     tool_call_id: str | None = None
 

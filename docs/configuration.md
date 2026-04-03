@@ -15,6 +15,7 @@ All configuration is done via environment variables (or a `.env` file). See [`.e
 | `DEFAULT_MODEL` | Fallback model name when client sends `"default"` | |
 | `CLIENTS_FILE` | Path to client registry JSON | `clients.json` |
 | `USAGE_DB` | Path to SQLite usage database | `prism_usage.db` |
+| `CORS_ORIGINS` | Comma-separated allowed origins, or `*` for all (empty = CORS disabled) | |
 | `PRISM_ADMIN_KEY` | Admin API key (empty = admin endpoints disabled) | |
 
 ## Client Setup
