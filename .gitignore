@@ -20,6 +20,12 @@ ENV/
 .env.*
 !.env.example
 
+# Client registry (contains secrets)
+clients.json
+
+# Usage database
+*.db
+
 # IDE
 .vscode/
 .idea/

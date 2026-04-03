@@ -17,5 +17,14 @@ class Settings(BaseSettings):
 
     default_model: str = Field(default="")
 
+    # Access control
+    clients_file: str = Field(default="clients.json")
+
+    # Usage tracking
+    usage_db: str = Field(default="prism_usage.db")
+
+    # Admin API
+    prism_admin_key: str = Field(default="")
+
 
 settings = Settings()

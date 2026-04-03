@@ -1,0 +1,10 @@
+{
+  "clients": [
+    {
+      "name": "example-agent",
+      "key": "pk-example-xxxxxxxxxxxx",
+      "allowed_models": ["*"],
+      "rate_limit": 0
+    }
+  ]
+}
