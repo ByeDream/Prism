@@ -32,8 +32,8 @@ Point any Anthropic SDK client at Prism:
 import anthropic
 
 client = anthropic.Anthropic(
-    api_key="your-prism-api-key",       # PRISM_API_KEY value
-    base_url="http://localhost:9877/v1", # Prism address
+    api_key="your-prism-api-key",      # PRISM_API_KEY value
+    base_url="http://localhost:9877",   # Prism address (no /v1 suffix)
 )
 
 response = client.messages.create(
