@@ -1,6 +1,8 @@
 """Unit tests for the request/response translation logic."""
 
 from prism.translator.models import (
+    AnthropicImageBlock,
+    AnthropicImageSource,
     AnthropicMessage,
     AnthropicRequest,
     AnthropicTextBlock,
@@ -97,6 +99,128 @@ class TestRequestTranslation:
         )
         oai = translate_request(req)
         assert not hasattr(oai, "top_k")
+
+
+class TestImageTranslation:
+    def test_base64_image_block(self):
+        req = AnthropicRequest(
+            model="m",
+            messages=[
+                AnthropicMessage(
+                    role="user",
+                    content=[
+                        AnthropicTextBlock(text="What is in this image?"),
+                        AnthropicImageBlock(
+                            source=AnthropicImageSource(
+                                type="base64",
+                                media_type="image/png",
+                                data="iVBORw0KGgo=",
+                            )
+                        ),
+                    ],
+                ),
+            ],
+        )
+        oai = translate_request(req)
+        content = oai.messages[0].content
+        assert isinstance(content, list)
+        assert len(content) == 2
+        assert content[0] == {"type": "text", "text": "What is in this image?"}
+        assert content[1]["type"] == "image_url"
+        assert content[1]["image_url"]["url"] == "data:image/png;base64,iVBORw0KGgo="
+
+    def test_url_image_block(self):
+        req = AnthropicRequest(
+            model="m",
+            messages=[
+                AnthropicMessage(
+                    role="user",
+                    content=[
+                        AnthropicTextBlock(text="Describe this."),
+                        AnthropicImageBlock(
+                            source=AnthropicImageSource(
+                                type="url",
+                                url="https://example.com/photo.jpg",
+                            )
+                        ),
+                    ],
+                ),
+            ],
+        )
+        oai = translate_request(req)
+        content = oai.messages[0].content
+        assert isinstance(content, list)
+        assert content[1]["image_url"]["url"] == "https://example.com/photo.jpg"
+
+    def test_multiple_images(self):
+        req = AnthropicRequest(
+            model="m",
+            messages=[
+                AnthropicMessage(
+                    role="user",
+                    content=[
+                        AnthropicTextBlock(text="Compare these two images."),
+                        AnthropicImageBlock(
+                            source=AnthropicImageSource(
+                                type="base64", media_type="image/jpeg", data="AAA=",
+                            )
+                        ),
+                        AnthropicImageBlock(
+                            source=AnthropicImageSource(
+                                type="base64", media_type="image/jpeg", data="BBB=",
+                            )
+                        ),
+                    ],
+                ),
+            ],
+        )
+        oai = translate_request(req)
+        content = oai.messages[0].content
+        assert isinstance(content, list)
+        assert len(content) == 3
+        assert content[0]["type"] == "text"
+        assert content[1]["image_url"]["url"] == "data:image/jpeg;base64,AAA="
+        assert content[2]["image_url"]["url"] == "data:image/jpeg;base64,BBB="
+
+    def test_image_only_no_text(self):
+        req = AnthropicRequest(
+            model="m",
+            messages=[
+                AnthropicMessage(
+                    role="user",
+                    content=[
+                        AnthropicImageBlock(
+                            source=AnthropicImageSource(
+                                type="url", url="https://example.com/img.png",
+                            )
+                        ),
+                    ],
+                ),
+            ],
+        )
+        oai = translate_request(req)
+        content = oai.messages[0].content
+        assert isinstance(content, list)
+        assert len(content) == 1
+        assert content[0]["type"] == "image_url"
+
+    def test_text_only_stays_string(self):
+        """When there are no image blocks, content stays a plain string."""
+        req = AnthropicRequest(
+            model="m",
+            messages=[
+                AnthropicMessage(
+                    role="user",
+                    content=[
+                        AnthropicTextBlock(text="Hello"),
+                        AnthropicTextBlock(text="World"),
+                    ],
+                ),
+            ],
+        )
+        oai = translate_request(req)
+        assert oai.messages[0].content == "Hello\nWorld"
+        assert isinstance(oai.messages[0].content, str)
 
 
 class TestResponseTranslation:
