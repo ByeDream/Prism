@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     # Usage tracking
     usage_db: str = Field(default="prism_usage.db")
 
+    # Upstream
+    upstream_timeout: float = Field(default=300.0)
+
     # Admin API
     prism_admin_key: str = Field(default="")
 

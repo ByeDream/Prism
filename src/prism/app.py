@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -21,13 +22,22 @@ from prism.translator.models import (
 )
 from prism.translator.request import translate_request
 from prism.translator.response import translate_response
-from prism.translator.streaming import translate_stream
+from prism.translator.streaming import StreamUsage, translate_stream
+from prism.upstream import client as upstream_client
 from prism.upstream.client import send_request, send_stream
 from prism.usage import UsageRecorder
 
 logger = logging.getLogger("prism")
 
-app = FastAPI(title="Prism", version="0.2.0")
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    await upstream_client.startup()
+    yield
+    await upstream_client.shutdown()
+
+
+app = FastAPI(title="Prism", version="0.2.0", lifespan=_lifespan)
 rate_limiter = RateLimiter()
 usage_recorder = UsageRecorder(settings.usage_db)
 
@@ -100,11 +110,22 @@ async def create_message(body: AnthropicRequest, request: Request):
     if body.stream:
         try:
             raw_stream = send_stream(payload)
-            sse = translate_stream(raw_stream, model=body.model)
-            elapsed = int((time.monotonic() - t0) * 1000)
-            _log_and_record(client, body.model, True, 200, elapsed)
+            stream_usage = StreamUsage()
+            sse = translate_stream(raw_stream, model=body.model, usage=stream_usage)
+
+            async def _tracked_sse():
+                try:
+                    async for event in sse:
+                        yield event
+                finally:
+                    elapsed = int((time.monotonic() - t0) * 1000)
+                    _log_and_record(
+                        client, body.model, True, 200, elapsed,
+                        stream_usage.input_tokens, stream_usage.output_tokens,
+                    )
+
             return StreamingResponse(
-                sse,
+                _tracked_sse(),
                 media_type="text/event-stream",
                 headers={
                     "Cache-Control": "no-cache",
