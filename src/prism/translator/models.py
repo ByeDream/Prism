@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal, Union
+from typing import Annotated, Any, Literal, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Discriminator, Field
 
 
 # ---------------------------------------------------------------------------
@@ -42,11 +42,14 @@ class AnthropicToolResultBlock(BaseModel):
     is_error: bool | None = None
 
 
-AnthropicContentBlock = Union[
-    AnthropicTextBlock,
-    AnthropicImageBlock,
-    AnthropicToolUseBlock,
-    AnthropicToolResultBlock,
+AnthropicContentBlock = Annotated[
+    Union[
+        AnthropicTextBlock,
+        AnthropicImageBlock,
+        AnthropicToolUseBlock,
+        AnthropicToolResultBlock,
+    ],
+    Discriminator("type"),
 ]
 
 
