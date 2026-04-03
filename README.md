@@ -65,6 +65,28 @@ All configuration is done via environment variables (or a `.env` file). See [`.e
 | `GET` | `/health` | Health check |
 | `GET` | `/docs` | Interactive API documentation (Swagger UI) |
 
+## Testing
+
+Unit tests (no server needed):
+
+```bash
+PYTHONPATH=src python -m pytest tests/test_translator.py -v
+```
+
+End-to-end and SDK tests (requires a running Prism server):
+
+```bash
+# Terminal 1 — start the server
+PYTHONPATH=src python -m prism
+
+# Terminal 2 — run tests
+PYTHONPATH=src \
+  PRISM_TEST_URL=http://127.0.0.1:9877 \
+  PRISM_TEST_KEY=your-prism-api-key \
+  PRISM_TEST_MODEL=your-model-name \
+  python -m pytest tests/ -v -s
+```
+
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
